@@ -7,11 +7,12 @@ from sklearn.impute import KNNImputer
 from sklearn.preprocessing import StandardScaler,LabelEncoder, OneHotEncoder, OrdinalEncoder
 from sklearn.model_selection import train_test_split
 
-def plot_heatmap(dataframe, title): #define heatmap function
-    plt.figure(figsize=(16, 12)) #define the plot size
-    sns.heatmap(dataframe.corr(), annot=True, cmap='coolwarm', vmin=-1, vmax=1) #same as heatmap above
-    plt.title(title) #define title
+def plot_heatmap(dataframe, title): #define heatmap function 
+    plt.figure(figsize=(16, 12)) #define the plot size 
+    sns.heatmap(dataframe.corr(method='spearman'), annot=True, cmap='coolwarm', vmin=-1, vmax=1, annot_kws={"size": 12}) #same as heatmap above 
+    plt.title(title) #define title 
     plt.show() #show
+
 
 def custom_binary_encode(value):
     if pd.isna(value) or not np.isfinite(value):
