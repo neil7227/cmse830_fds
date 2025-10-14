@@ -33,5 +33,5 @@ st.text(info_str)
 
 
 #describe
-st.subheader("📈 Statistical Summary")
+st.subheader("Statistical Summary")
 st.dataframe(df.describe())
