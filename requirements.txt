@@ -1,0 +1,15 @@
+# Web framework
+streamlit>=1.24.0
+
+# Data processing
+pandas>=2.0
+numpy>=1.25
+openpyxl>=3.1  # for reading Excel files
+
+# Visualization
+matplotlib>=3.7
+seaborn>=0.12
+
+# Machine learning / preprocessing
+scikit-learn>=1.3
+
