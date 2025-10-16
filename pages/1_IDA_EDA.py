@@ -212,6 +212,8 @@ with tab3:
     rf_imputer = IterativeImputer(estimator=rf, random_state=42, max_iter=70, sample_posterior=False)
     df_imputed[['R_scaled','WAR','BsR']] = rf_imputer.fit_transform(df_imputed[['R_scaled','WAR','BsR']])
     
+    col1, col2 = st.columns(2)
+    
     with col1:
         st.dataframe(df_imputed['BsR'].describe())
     with col2:

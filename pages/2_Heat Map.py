@@ -22,23 +22,23 @@ MLB_data[['K%','BB%']] = MLB_data[['K%','BB%']] * 100
 CPBL_data['PA_scaled'] = CPBL_data['PA']/CPBL_Game
 MLB_data['PA_scaled'] = MLB_data['PA']/MLB_Game
 
-df = pd.concat([MLB_data, CPBL_data], axis=0, ignore_index=True)
-df = df[df['PA_scaled'] > 1]
+df_bef = pd.concat([MLB_data, CPBL_data], axis=0, ignore_index=True)
+df_bef = df_bef[df_bef['PA_scaled'] > 1]
 Scale = 600
-df['HR_scaled'] = df['HR'] * Scale / df['PA']
-df['R_scaled'] = df['R'] * Scale / df['PA']
-df['RBI_scaled'] = df['RBI'] * Scale / df['PA']
-df.drop(columns=['HR','R','RBI','PA'], inplace=True)
+df_bef['HR_scaled'] = df_bef['HR'] * Scale / df_bef['PA']
+df_bef['R_scaled'] = df_bef['R'] * Scale / df_bef['PA']
+df_bef['RBI_scaled'] = df_bef['RBI'] * Scale / df_bef['PA']
+df_bef.drop(columns=['HR','R','RBI','PA'], inplace=True)
 
 # --- Encoding ---
 st.subheader("Encoding")
 oe = OrdinalEncoder()
-df['Num_Ordi'] = oe.fit_transform(df[['Num']])
-df['Team_Ordi'] = oe.fit_transform(df[['Team']])
+df_bef['Num_Ordi'] = oe.fit_transform(df_bef[['Num']])
+df_bef['Team_Ordi'] = oe.fit_transform(df_bef[['Team']])
 
 # --- Numeric DataFrame ---
-num_col = df.select_dtypes(include=[np.number]).columns.tolist()
-df_num = df[num_col].copy()
+num_col = df_bef.select_dtypes(include=[np.number]).columns.tolist()
+df_num = df_bef[num_col].copy()
 for c in ['Num','Num_Ordi','Team_Ordi']:
     if c in df_num.columns:
         df_num.drop(columns=c, inplace=True)
