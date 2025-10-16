@@ -14,7 +14,7 @@ st.set_page_config(page_title="CPBL & MLB IDA/EDA", layout="wide")
 plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei']
 plt.rcParams['axes.unicode_minus'] = False
 
-st.title("⚾ CPBL & MLB Data Processing Visualization")
+st.title("⚾ CPBL & MLB Data Processing")
 tab1, tab2, tab3 = st.tabs(["Preview/Encoding/Scaling", "Heat Map", "Imputing"])
 
 with tab1:
@@ -51,13 +51,12 @@ with tab1:
     st.subheader("Encoding")
     oe = OrdinalEncoder()
     df['Num_Ordi'] = oe.fit_transform(df[['Num']])
-    df['Team_Ordi'] = oe.fit_transform(df[['Team']])
-    st.dataframe(df[['Num','Num_Ordi','Team','Team_Ordi']].dropna(subset=['Num','Team']).head(10))
+    st.dataframe(df[['Num','Num_Ordi','Team']].dropna(subset=['Num','Team']).head(10))
 
     # --- Numeric DataFrame ---
     num_col = df.select_dtypes(include=[np.number]).columns.tolist()
     df_num = df[num_col].copy()
-    for c in ['Num','Num_Ordi','Team_Ordi']:
+    for c in ['Num','Num_Ordi']:
         if c in df_num.columns:
             df_num.drop(columns=c, inplace=True)
 
@@ -71,55 +70,182 @@ with tab1:
     scaler = RobustScaler()
     df_scaled = pd.DataFrame(scaler.fit_transform(df_num[num_cols]), columns=num_cols, index=df_num.index)
     st.dataframe(df_scaled.head())
+
 with tab2:
     # --- Heatmap ---
     st.subheader("Heatmap of Numeric Features")
     fig, ax = plt.subplots(figsize=(12,8))
     sns.heatmap(df_scaled.corr(), annot=True, fmt=".2f", cmap="coolwarm", ax=ax)
     st.pyplot(fig)
+
 with tab3:
-    # --- Iterative Imputer ---
-    st.subheader("Iterative Imputer")
-    impute_groups = [
-        ['ISO','SLG','OPS+','HR_scaled'],
-        ['ISO','SLG','RBI_scaled','HR_scaled'],
-        ['K%','BIP%','PutAway%','PA_scaled','AVG']
-    ]
-
     df_imputed = df_scaled.copy()
-    for feature in impute_groups:
-        imputer = IterativeImputer(random_state=42, sample_posterior=True, max_iter=10)
-        df_imputed[feature] = imputer.fit_transform(df_imputed[feature])
-        st.write(f"Imputed features: {feature}")
-        st.dataframe(df_imputed[feature].head(10))
-
-
+    df_imputed['Num_Ordi'] = df['Num_Ordi']
     # --- Linear Regression Imputer for wRC+ ---
+    df_imputed['was_missing'] = df['wRC+'].isna()
     st.subheader("Linear Regression Imputation: wRC+")
     df_clean = df_imputed.dropna(subset=['wRC+'])
     lr_wRC = LinearRegression().fit(df_clean[['Off','OPS+','wOBA']], df_clean['wRC+'])
     missing = df_imputed.loc[df_imputed['wRC+'].isna(), ['Off','OPS+','wOBA']]
     df_imputed.loc[df_imputed['wRC+'].isna(), 'wRC+'] = lr_wRC.predict(missing)
-    st.dataframe(df_imputed[['Off','OPS+','wOBA','wRC+']].head())
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.dataframe(df_imputed['wRC+'].describe())
+
+    with col2:
+        fig, ax = plt.subplots(figsize=(6,3))
+        for label, group_data in df_imputed.groupby('was_missing'):
+            sns.kdeplot(data=group_data, x='wRC+', fill=True, label=f"Was Missing = {label}", ax=ax)
+            
+            ax.set_title('wRC+ Distribution (Imputed vs Original)')
+            ax.set_xlabel('wRC+')
+            ax.set_ylabel('Density')
+            ax.legend(title='Missing Status')
+            
+        st.pyplot(fig)
 
     # --- Linear Regression Imputer for R_scaled ---
+    df_imputed['was_missing'] = df['R_scaled'].isna()
     st.subheader("Linear Regression Imputation: R_scaled")
     df_clean = df_imputed.dropna(subset=['R_scaled'])
     lr_R = LinearRegression().fit(df_clean[['Off','wRC+','wOBA']], df_clean['R_scaled'])
     missing = df_imputed.loc[df_imputed['R_scaled'].isna(), ['Off','wRC+','wOBA']]
     df_imputed.loc[df_imputed['R_scaled'].isna(), 'R_scaled'] = lr_R.predict(missing)
-    st.dataframe(df_imputed[['Off','wRC+','wOBA','R_scaled']].head())
+    col1, col2 = st.columns(2)
 
+    with col1:
+        st.dataframe(df_imputed['R_scaled'].describe())
+    with col2:
+        fig, ax = plt.subplots(figsize=(6,3))
+        for label, group_data in df_imputed.groupby('was_missing'):
+            sns.kdeplot(data=group_data, x='R_scaled', fill=True, label=f"Was Missing = {label}", ax=ax)
+            
+            ax.set_title('R_scaled Distribution (Imputed vs Original)')
+            ax.set_xlabel('R_scaled')
+            ax.set_ylabel('Density')
+            ax.legend(title='Missing Status')
+            
+        st.pyplot(fig)
+
+
+    # --- Iterative Imputer ---
+    st.subheader("Iterative Imputer")
+    impute_groups = [
+        ['ISO','SLG','OPS+','HR_scaled'],
+        ['ISO','SLG','RBI_scaled','HR_scaled'],
+        ['K%','BIP%','PutAway%','PA_scaled','AVG'],
+        ['PA_scaled', 'BB%', 'ISO', 'BABIP', 'AVG', 'OBP', 'SLG', 'wOBA', 'wRC+', 'Off', 'WAR', 'OPS+', 'HR_scaled', 'R_scaled']
+    ]
+    target_col = ['HR_scaled', 'RBI_scaled', 'PutAway%', 'BIP%', 'WAR']
+
+    for i,feature in enumerate(impute_groups):
+        if i < 3:
+            df_imputed['was_missing'] = df[target_col[i]].isna()
+        else:
+            df_imputed['was_missing'] = df[target_col[i+1]].isna()
+        imputer = IterativeImputer(random_state=42, sample_posterior=True, max_iter=10)
+        df_imputed[feature] = imputer.fit_transform(df_imputed[feature])
+        col1, col2 = st.columns(2)
+        with col1:
+            if i < 2:
+                st.subheader(f"Target features: {target_col[i]}")
+                st.write(f"Imputed features: {feature}")
+                st.dataframe(df_imputed[target_col[i]].describe())
+            elif i < 3:
+                st.subheader(f"Target features: {target_col[i]}, {target_col[i+1]}")
+                st.write(f"Imputed features: {feature}")
+                st.dataframe(df_imputed[target_col[i]].describe())
+                st.dataframe(df_imputed[target_col[i+1]].describe())
+            else: 
+                st.subheader(f"Target features: {target_col[i+1]}")
+                st.write(f"Imputed features: {feature}")
+                st.dataframe(df_imputed[target_col[i+1]].describe())
+        with col2:
+            if i < 2:
+                fig, ax = plt.subplots(figsize=(6,3))
+                for label, group_data in df_imputed.groupby('was_missing'):
+                    sns.kdeplot(data=group_data, x=target_col[i], fill=True, label=f"Was Missing = {label}", ax=ax)
+                    
+                    ax.set_title(f'{target_col[i]} Distribution (Imputed vs Original)')
+                    ax.set_xlabel(target_col[i])
+                    ax.set_ylabel('Density')
+                    ax.legend(title='Missing Status')
+                    
+                st.pyplot(fig)
+            elif i < 3:
+                fig, ax = plt.subplots(figsize=(6,3))
+                for label, group_data in df_imputed.groupby('was_missing'):
+                    sns.kdeplot(data=group_data, x=target_col[i], fill=True, label=f"Was Missing = {label}", ax=ax)
+                    
+                    ax.set_title(f'{target_col[i]} Distribution (Imputed vs Original)')
+                    ax.set_xlabel(target_col[i])
+                    ax.set_ylabel('Density')
+                    ax.legend(title='Missing Status')
+                st.pyplot(fig)
+                
+                fig, ax = plt.subplots(figsize=(6,3))
+                for label, group_data in df_imputed.groupby('was_missing'):
+                    sns.kdeplot(data=group_data, x=target_col[i+1], fill=True, label=f"Was Missing = {label}", ax=ax)
+
+                    ax.set_title(f'{target_col[i+1]} Distribution (Imputed vs Original)')
+                    ax.set_xlabel(target_col[i+1])
+                    ax.set_ylabel('Density')
+                    ax.legend(title='Missing Status')
+                st.pyplot(fig)
+            else: 
+                fig, ax = plt.subplots(figsize=(6,3))
+                for label, group_data in df_imputed.groupby('was_missing'):
+                    sns.kdeplot(data=group_data, x=target_col[i+1], fill=True, label=f"Was Missing = {label}", ax=ax)
+                    
+                    ax.set_title(f'{target_col[i+1]} Distribution (Imputed vs Original)')
+                    ax.set_xlabel(target_col[i+1])
+                    ax.set_ylabel('Density')
+                    ax.legend(title='Missing Status')
+                st.pyplot(fig)
+                
     # --- RandomForest Imputer ---
-    st.subheader("RandomForest Imputer: R_scaled, WAR, BsR")
+    st.subheader("RandomForest Imputer: BsR")
+    df_imputed['was_missing'] = df['BsR'].isna()
     rf = RandomForestRegressor(n_estimators=100, max_depth=10, min_samples_leaf=3,
                             random_state=42, n_jobs=-1)
     rf_imputer = IterativeImputer(estimator=rf, random_state=42, max_iter=70, sample_posterior=False)
     df_imputed[['R_scaled','WAR','BsR']] = rf_imputer.fit_transform(df_imputed[['R_scaled','WAR','BsR']])
-    st.dataframe(df_imputed[['R_scaled','WAR','BsR']].head())
+    
+    with col1:
+        st.dataframe(df_imputed['BsR'].describe())
+    with col2:
+        fig, ax = plt.subplots(figsize=(6,3))
+        for label, group_data in df_imputed.groupby('was_missing'):
+            sns.kdeplot(data=group_data, x='BsR', fill=True, label=f"Was Missing = {label}", ax=ax)
+            
+            ax.set_title('BsR Distribution (Imputed vs Original)')
+            ax.set_xlabel('BsR')
+            ax.set_ylabel('Density')
+            ax.legend(title='Missing Status')
+            
+        st.pyplot(fig)
 
     # --- Final KNN Imputer ---
-    st.subheader("Final KNN Imputer")
+    st.subheader("KNN Imputer: Num")
+    df_imputed['was_missing'] = df['Num_Ordi'].isna()
     knn_imputer = KNNImputer(n_neighbors=1)
-    df_final = pd.DataFrame(knn_imputer.fit_transform(df_imputed), columns=df_imputed.columns)
-    st.dataframe(df_final.head())
+    df_imputed = pd.DataFrame(knn_imputer.fit_transform(df_imputed), columns=df_imputed.columns)
+    num_categories = len(oe.categories_[0])
+    df_imputed['Num_Ordi'] = df_imputed['Num_Ordi'].round().clip(0, num_categories-1).astype(int)
+    df_imputed['Num'] = oe.inverse_transform(df_imputed[['Num_Ordi']])[:, 0]
+
+    df_imputed['Num_plot'] = df_imputed['Num'].astype(int).astype(str)  
+    fig, ax = plt.subplots(figsize=(8,4))
+    sns.countplot(data=df_imputed, x='Num_plot', hue='was_missing', ax=ax)
+    ax.set_title('Num Distribution (Imputed vs Original)', fontsize=12)
+    ax.set_xlabel('Num', fontsize=10)
+    ax.set_ylabel('Count', fontsize=10)
+    ax.legend(title='Was Missing', fontsize=9, title_fontsize=10)
+    ax.tick_params(axis='x', rotation=90, labelsize=8)
+    plt.tight_layout()
+    st.pyplot(fig)
+
+
+    
+    df_imputed.drop(columns = 'was_missing', inplace = True)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[84]:
+# In[5]:
 
 
 #import
@@ -20,7 +20,7 @@ plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei']
 plt.rcParams['axes.unicode_minus'] = False 
 
 
-# In[85]:
+# In[6]:
 
 
 #read
@@ -28,7 +28,7 @@ CPBL_data = pd.read_excel("CPBL_batter.xlsx")
 MLB_data = pd.read_excel("MLB_batter.xlsx")
 
 
-# In[86]:
+# In[7]:
 
 
 #first view
@@ -36,21 +36,21 @@ CPBL_data.info()
 CPBL_data.describe()
 
 
-# In[87]:
+# In[8]:
 
 
 MLB_data.info()
 MLB_data.describe()
 
 
-# In[88]:
+# In[9]:
 
 
 df = pd.concat([MLB_data, CPBL_data], axis=0, ignore_index=True)
 df.info()
 
 
-# In[89]:
+# In[10]:
 
 
 #check column
@@ -59,7 +59,7 @@ diff_col = set(CPBL_data.columns) ^ set(MLB_data.columns)
 print("same column: ", same_col, "\ndiff. column: ", diff_col)
 
 
-# In[90]:
+# In[11]:
 
 
 #data clean
@@ -89,7 +89,7 @@ df['RBI_scaled'] = df['RBI'] * Scale / df['PA']
 df.drop(columns=['HR','R','RBI','PA'], inplace=True)
 
 
-# In[91]:
+# In[12]:
 
 
 #encoding
@@ -102,7 +102,7 @@ df['Team_Bi'] = df['Team_Ordi'].apply(tool.custom_binary_encode)'''
 df.head()
 
 
-# In[92]:
+# In[13]:
 
 
 #numerical col
@@ -112,7 +112,7 @@ df_num.drop(columns= ['Num','Num_Ordi','Team_Ordi'], inplace = True)
 df_num.info()
 
 
-# In[93]:
+# In[14]:
 
 
 #split league
@@ -120,7 +120,7 @@ df_num["CPBL"] = False
 df_num.loc[df_num["HR_scaled"].isnull() == True, "CPBL"] = True
 
 
-# In[94]:
+# In[15]:
 
 
 #standardize
@@ -134,14 +134,14 @@ df_num[num_cols] = pd.DataFrame(
 )
 
 
-# In[95]:
+# In[16]:
 
 
 #heatmap
 tool.plot_heatmap(df_num, 'full data heat map')
 
 
-# In[96]:
+# In[17]:
 
 
 #hist
@@ -160,7 +160,7 @@ plt.tight_layout()
 plt.show()
 
 
-# In[97]:
+# In[18]:
 
 
 '''df_clean = df_num.dropna(subset=['HR_scaled'])
@@ -179,20 +179,7 @@ df_num.loc[df_num['HR_scaled'].isna(), 'HR_scaled'] = predicted_values
 '''
 
 
-# In[98]:
-
-
-#impute
-feature = ['ISO', 'SLG', 'OPS+', 'HR_scaled']
-
-imputer = IterativeImputer(random_state=42, sample_posterior=True, max_iter=10)
-
-imputed_array = imputer.fit_transform(df_num[feature])
-
-df_num[feature] = imputed_array
-
-
-# In[99]:
+# In[ ]:
 
 
 df_clean = df_num.dropna(subset=['wRC+'])
@@ -210,31 +197,7 @@ predicted_values = linear_model.predict(missing)
 df_num.loc[df_num['wRC+'].isna(), 'wRC+'] = predicted_values
 
 
-# In[100]:
-
-
-feature = ['ISO', 'SLG', 'RBI_scaled', 'HR_scaled']
-
-imputer = IterativeImputer(random_state=42, sample_posterior=True, max_iter=10)
-
-imputed_array = imputer.fit_transform(df_num[feature])
-
-df_num[feature] = imputed_array
-
-
-# In[101]:
-
-
-feature = ['K%', 'BIP%', 'PutAway%', 'PA_scaled', 'AVG'] #後續train可加入['BB%', 'OBP', 'wOBA', 'Off', 'OPS+']看看效果 (tag)
-
-imputer = IterativeImputer(random_state=42, sample_posterior=True, max_iter=10)
-
-imputed_array = imputer.fit_transform(df_num[feature])
-
-df_num[feature] = imputed_array
-
-
-# In[102]:
+# In[ ]:
 
 
 df_clean = df_num.dropna(subset=['R_scaled'])
@@ -252,7 +215,43 @@ predicted_values = linear_model.predict(missing)
 df_num.loc[df_num['R_scaled'].isna(), 'R_scaled'] = predicted_values
 
 
-# In[103]:
+# In[ ]:
+
+
+feature = ['ISO', 'SLG', 'OPS+', 'HR_scaled']
+
+imputer = IterativeImputer(random_state=42, sample_posterior=True, max_iter=10)
+
+imputed_array = imputer.fit_transform(df_num[feature])
+
+df_num[feature] = imputed_array
+
+
+# In[21]:
+
+
+feature = ['ISO', 'SLG', 'RBI_scaled', 'HR_scaled']
+
+imputer = IterativeImputer(random_state=42, sample_posterior=True, max_iter=10)
+
+imputed_array = imputer.fit_transform(df_num[feature])
+
+df_num[feature] = imputed_array
+
+
+# In[22]:
+
+
+feature = ['K%', 'BIP%', 'PutAway%', 'PA_scaled', 'AVG'] #後續train可加入['BB%', 'OBP', 'wOBA', 'Off', 'OPS+']看看效果 (tag)
+
+imputer = IterativeImputer(random_state=42, sample_posterior=True, max_iter=10)
+
+imputed_array = imputer.fit_transform(df_num[feature])
+
+df_num[feature] = imputed_array
+
+
+# In[24]:
 
 
 feature = ['PA_scaled', 'BB%', 'ISO', 'BABIP', 'AVG', 'OBP', 'SLG', 'wOBA', 'wRC+', 'Off', 'WAR', 'OPS+', 'HR_scaled', 'R_scaled']
@@ -264,7 +263,7 @@ imputed_array = imputer.fit_transform(df_num[feature])
 df_num[feature] = imputed_array
 
 
-# In[104]:
+# In[25]:
 
 
 feature_col = ['R_scaled', 'WAR', 'BsR'] #後續train可加入['BB%', 'BABIP', 'AVG', 'Off', 'HR_scaled', 'RBI_scaled']看看效果 (tag) 
@@ -280,7 +279,7 @@ bsr_imputer = IterativeImputer(estimator=rf, random_state=42, max_iter=70, sampl
 df_num[feature_col] = bsr_imputer.fit_transform(df_num[feature_col])
 
 
-# In[105]:
+# In[26]:
 
 
 df_num['Num_Ordi'] = df['Num_Ordi']
@@ -300,13 +299,13 @@ df_num.update(df_imputed)
 df['CPBL'] = df_imputed['CPBL']
 
 
-# In[106]:
+# In[27]:
 
 
 #tool.plot_heatmap(df_imputed, 'imputed data heat map')
 
 
-# In[107]:
+# In[28]:
 
 
 #show imputed
@@ -315,7 +314,7 @@ df_num.drop('BsR_missing', axis=1, inplace=True, errors='ignore')
 df_num.describe()
 
 
-# In[108]:
+# In[29]:
 
 
 df_num[num_cols] = pd.DataFrame(
@@ -328,7 +327,7 @@ df.update(df_num)
 df = df[df['PA_scaled'] >= 3]
 
 
-# In[109]:
+# In[30]:
 
 
 #hist
@@ -347,7 +346,7 @@ plt.tight_layout()
 plt.show()
 
 
-# In[110]:
+# In[31]:
 
 
 #update
@@ -355,7 +354,7 @@ df.update(df_num)
 df['CPBL'] = df_num['CPBL'] 
 
 
-# In[111]:
+# In[32]:
 
 
 #scatter
@@ -384,7 +383,7 @@ plt.tight_layout()
 plt.show()
 
 
-# In[112]:
+# In[33]:
 
 
 col = [x for x in df.select_dtypes(include=np.number).columns 
@@ -414,7 +413,7 @@ plt.tight_layout()
 plt.show()
 
 
-# In[113]:
+# In[34]:
 
 
 #violin 
@@ -440,9 +439,15 @@ plt.tight_layout()
 plt.show()
 
 
-# In[114]:
+# In[35]:
 
 
 df.to_csv("cleaned_data.csv", index=False)
 df_num.to_csv("cleaned_data_num.csv", index=False)
+
+
+# In[37]:
+
+
+get_ipython().system('jupyter nbconvert --to script notebook.ipynb')
 
