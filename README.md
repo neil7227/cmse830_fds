@@ -3,3 +3,4 @@
 2. I learn several skill to do IDA and EDA to solve some complex missing value like several model and randomforest.
 3. I've completed data cleaning, encoding, scaling, feature engineering, and imputation.
 4. I've try to show every step of data processing and visualization as clear as I can.
+5. website: https://cmse830fds-hy8vjnnqmnbwskn2eumvcy.streamlit.app/
