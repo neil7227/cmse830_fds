@@ -8,7 +8,9 @@ plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei']
 plt.rcParams['axes.unicode_minus'] = False
 
 #read
-CPBL_data = pd.read_excel("CPBL_batter.xlsx")
+CPBL_data_2024 = pd.read_excel("CPBL_batter_2024.xlsx")
+CPBL_data_2025 = pd.read_excel("CPBL_batter_2025.xlsx")
+CPBL_data = pd.concat([CPBL_data_2024, CPBL_data_2025], axis=0, ignore_index=True)
 MLB_data = pd.read_excel("MLB_batter.xlsx")
 df = pd.concat([MLB_data, CPBL_data], axis=0, ignore_index=True)
 
@@ -22,10 +24,17 @@ tab1, tab2 = st.tabs(["Preview", "Variable Descriptions"])
 
 with tab1:
     st.title("⚾ CPBL & MLB Batter Data Analysis Main Page")
-    st.write("This page shows the overview of raw data.")
+    st.write("Welcome to the CPBL & MLB Batter Data Analysis Dashboard! This dashboard provides an in-depth look at batter performance metrics from both the Chinese Professional Baseball League (CPBL) and Major League Baseball (MLB). Explore various statistical analyses, visualizations, and insights to better understand player performance across these two prominent baseball leagues. This page shows the overview of raw data. I used three datasets: `2025 CPBL batter data`, `2024 CPBL batter data` crawled from `Rebas野球革命`, and `2025 MLB batter data` crawled from `fangraphs` which CPBL is baseball league in Taiwan and MLB is baseball league in the United States. I choose two year of CPBL data is because CPBL play less games in a year.")
 
     #Dataset Preview
-    st.subheader("Dataset Preview")
+    st.subheader("Original Dataset Preview")
+    st.subheader("CPBL 2024 Data Preview")
+    st.dataframe(CPBL_data_2024.head())
+    st.subheader("CPBL 2025 Data Preview")
+    st.dataframe(CPBL_data_2025.head())
+    st.subheader("MLB Data Preview")
+    st.dataframe(MLB_data.head())
+    st.subheader("Combined Dataset Preview")
     st.dataframe(df.head())
 
     #Info / Heatmap
@@ -54,7 +63,7 @@ with tab1:
 with tab2:
     
     st.title("Variable descriptions")
-
+    st.write("In this page I show the description of each variable in the dataset used for analysis.")
     #variable description
     variable_descriptions = {
         "BB%": "Walk rate — percentage of plate appearances ending in a walk.",

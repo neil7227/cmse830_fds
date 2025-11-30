@@ -15,13 +15,15 @@ plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei']
 plt.rcParams['axes.unicode_minus'] = False
 
 st.title("⚾ CPBL & MLB Data Processing")
-tab1, tab2, tab3 = st.tabs(["Preview/Encoding/Scaling", "Heat Map", "Imputing"])
+tab1, tab2 = st.tabs(["Preview/Encoding/Scaling", "Imputing"])
 
 with tab1:
     # --- Load data ---
-    CPBL_data = pd.read_excel("CPBL_batter.xlsx")
+    CPBL_data_2024 = pd.read_excel("CPBL_batter_2024.xlsx")
+    CPBL_data_2025 = pd.read_excel("CPBL_batter_2025.xlsx")
+    CPBL_data = pd.concat([CPBL_data_2024, CPBL_data_2025], axis=0, ignore_index=True)
     MLB_data = pd.read_excel("MLB_batter.xlsx")
-    df = pd.concat([CPBL_data, MLB_data], axis=0, ignore_index=True)
+    df = pd.concat([MLB_data, CPBL_data], axis=0, ignore_index=True)
 
     # --- Data cleaning ---
     CPBL_Game, MLB_Game = 120, 162
@@ -45,13 +47,16 @@ with tab1:
     df.drop(columns=['HR','R','RBI','PA'], inplace=True)
 
     st.subheader("Dataset Preview after initial cleaning")
+    st.write("For the initial cleaning, I removed some irrelevant columns and created new features such as `PA_scaled`, `HR_scaled`, `R_scaled`, and `RBI_scaled` to standardize the data based on the number of games played in each league. Additionally, I calculated the `Off` metric for CPBL players to align with MLB's offensive metrics.")
     st.dataframe(df.head())
 
     # --- Encoding ---
     st.subheader("Encoding")
+    st.write("In this section, I applied Ordinal Encoding to the `Num`categorical feature to ensure the imputation process works correctly.")
     oe = OrdinalEncoder()
     df['Num_Ordi'] = oe.fit_transform(df[['Num']])
-    st.dataframe(df[['Num','Num_Ordi','Team']].dropna(subset=['Num','Team']).head(10))
+    st.dataframe(df[['Num','Num_Ordi']].dropna(subset=['Num']).head(10))
+
 
     # --- Numeric DataFrame ---
     num_col = df.select_dtypes(include=[np.number]).columns.tolist()
@@ -72,13 +77,6 @@ with tab1:
     st.dataframe(df_scaled.head())
 
 with tab2:
-    # --- Heatmap ---
-    st.subheader("Heatmap of Numeric Features")
-    fig, ax = plt.subplots(figsize=(12,8))
-    sns.heatmap(df_scaled.corr(), annot=True, fmt=".2f", cmap="coolwarm", ax=ax)
-    st.pyplot(fig)
-
-with tab3:
     df_imputed = df_scaled.copy()
     df_imputed['Num_Ordi'] = df['Num_Ordi']
     # --- Linear Regression Imputer for wRC+ ---

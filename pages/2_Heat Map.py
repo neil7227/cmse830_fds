@@ -7,7 +7,9 @@ import numpy as np
 
 st.title("Correlation Analysis Dashboard")
 
-CPBL_data = pd.read_excel("CPBL_batter.xlsx")
+CPBL_data_2024 = pd.read_excel("CPBL_batter_2024.xlsx")
+CPBL_data_2025 = pd.read_excel("CPBL_batter_2025.xlsx")
+CPBL_data = pd.concat([CPBL_data_2024, CPBL_data_2025], axis=0, ignore_index=True)
 MLB_data = pd.read_excel("MLB_batter.xlsx")
 df_bef = pd.concat([CPBL_data, MLB_data], axis=0, ignore_index=True)
 df = pd.read_csv("cleaned_data.csv")
