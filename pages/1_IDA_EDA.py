@@ -46,8 +46,15 @@ with tab1:
     df['RBI_scaled'] = df['RBI'] * Scale / df['PA']
     df.drop(columns=['HR','R','RBI','PA'], inplace=True)
 
-    st.subheader("Dataset Preview after initial cleaning")
-    st.write("For the initial cleaning, I removed some irrelevant columns and created new features such as `PA_scaled`, `HR_scaled`, `R_scaled`, and `RBI_scaled` to standardize the data based on the number of games played in each league. Additionally, I calculated the `Off` metric for CPBL players to align with MLB's offensive metrics.")
+    # --- Dataset Preview ---
+    st.subheader("Dataset Preview after Initial Cleaning")
+    st.write("""
+    This section shows the dataset after initial cleaning. 
+    I removed irrelevant columns and created standardized features (`PA_scaled`, `HR_scaled`, `R_scaled`, `RBI_scaled`) 
+    to account for different number of games in CPBL and MLB. 
+    For CPBL players, I also computed the `Off` metric to align with MLB offensive metrics. 
+    The table below shows the first few rows of the cleaned dataset.
+    """)
     st.dataframe(df.head())
 
     # --- Encoding ---
@@ -71,6 +78,10 @@ with tab1:
 
     # --- Scaling ---
     st.subheader("Scaling (RobustScaler)")
+    st.write("""
+    To normalize the numeric features and reduce the impact of outliers, I applied RobustScaler to all numeric columns (excluding `CPBL`). 
+    This prepares the data for machine learning models by ensuring features are on a similar scale.
+    """)
     num_cols = [c for c in df_num.select_dtypes(include='number').columns if c != 'CPBL']
     scaler = RobustScaler()
     df_scaled = pd.DataFrame(scaler.fit_transform(df_num[num_cols]), columns=num_cols, index=df_num.index)
@@ -80,8 +91,13 @@ with tab2:
     df_imputed = df_scaled.copy()
     df_imputed['Num_Ordi'] = df['Num_Ordi']
     # --- Linear Regression Imputer for wRC+ ---
-    df_imputed['was_missing'] = df['wRC+'].isna()
     st.subheader("Linear Regression Imputation: wRC+")
+    st.write("""
+    Some `wRC+` values are missing. 
+    I used Linear Regression to impute these missing values, using `Off`, `OPS+`, and `wOBA` as predictors. 
+    The left table shows descriptive statistics after imputation, while the right plot compares the distribution of imputed vs original values.
+    """)
+    df_imputed['was_missing'] = df['wRC+'].isna()
     df_clean = df_imputed.dropna(subset=['wRC+'])
     lr_wRC = LinearRegression().fit(df_clean[['Off','OPS+','wOBA']], df_clean['wRC+'])
     missing = df_imputed.loc[df_imputed['wRC+'].isna(), ['Off','OPS+','wOBA']]
@@ -104,8 +120,13 @@ with tab2:
         st.pyplot(fig)
 
     # --- Linear Regression Imputer for R_scaled ---
-    df_imputed['was_missing'] = df['R_scaled'].isna()
     st.subheader("Linear Regression Imputation: R_scaled")
+    st.write("""
+    Some `R_scaled` values are missing. 
+    I used Linear Regression to impute these missing values, using `Off`, `wRC+`, and `wOBA` as predictors. 
+    This ensures a complete dataset for downstream analysis.
+    """)
+    df_imputed['was_missing'] = df['R_scaled'].isna()
     df_clean = df_imputed.dropna(subset=['R_scaled'])
     lr_R = LinearRegression().fit(df_clean[['Off','wRC+','wOBA']], df_clean['R_scaled'])
     missing = df_imputed.loc[df_imputed['R_scaled'].isna(), ['Off','wRC+','wOBA']]
@@ -128,7 +149,13 @@ with tab2:
 
 
     # --- Iterative Imputer ---
+    # --- Iterative Imputer ---
     st.subheader("Iterative Imputer")
+    st.write("""
+    To handle missing values in multiple features simultaneously, I applied Iterative Imputer. 
+    This method models each feature with missing values as a function of other features iteratively. 
+    Here, I imputed several groups of related features, such as power metrics, strike/ball metrics, and overall performance metrics.
+    """)
     impute_groups = [
         ['ISO','SLG','OPS+','HR_scaled'],
         ['ISO','SLG','RBI_scaled','HR_scaled'],
@@ -204,6 +231,11 @@ with tab2:
                 
     # --- RandomForest Imputer ---
     st.subheader("RandomForest Imputer: BsR")
+    st.write("""
+    For `BsR` (Base Running Runs), missing values were imputed using a Random Forest-based Iterative Imputer. 
+    Because BsR is weakly correlated with other features, this method helps capture complex relationships.
+    This leverages the predictive power of ensemble models to better estimate missing baserunning contributions.
+    """)
     df_imputed['was_missing'] = df['BsR'].isna()
     rf = RandomForestRegressor(n_estimators=100, max_depth=10, min_samples_leaf=3,
                             random_state=42, n_jobs=-1)
@@ -228,6 +260,11 @@ with tab2:
 
     # --- Final KNN Imputer ---
     st.subheader("KNN Imputer: Num")
+    st.write("""
+    For the categorical feature `Num` (player number), missing values were imputed using KNN Imputer. 
+    This fills missing categories based on the nearest neighbors in feature space. 
+    After imputation, the values are rounded and clipped to ensure they fall within valid categories.
+    """)
     df_imputed['was_missing'] = df['Num_Ordi'].isna()
     knn_imputer = KNNImputer(n_neighbors=1)
     df_imputed = pd.DataFrame(knn_imputer.fit_transform(df_imputed), columns=df_imputed.columns)

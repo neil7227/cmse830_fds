@@ -6,7 +6,11 @@ from sklearn.preprocessing import OrdinalEncoder
 import numpy as np
 
 st.title("Correlation Analysis Dashboard")
-
+st.write("""
+Welcome to the Correlation Analysis Dashboard!  
+Here you can explore relationships between different player performance metrics from CPBL and MLB datasets.
+You can visualize correlations for all numeric variables or focus on key metrics like WAR and OPS+.
+""")
 CPBL_data_2024 = pd.read_excel("CPBL_batter_2024.xlsx")
 CPBL_data_2025 = pd.read_excel("CPBL_batter_2025.xlsx")
 CPBL_data = pd.concat([CPBL_data_2024, CPBL_data_2025], axis=0, ignore_index=True)
@@ -33,15 +37,13 @@ df_bef['RBI_scaled'] = df_bef['RBI'] * Scale / df_bef['PA']
 df_bef.drop(columns=['HR','R','RBI','PA'], inplace=True)
 
 # --- Encoding ---
-st.subheader("Encoding")
 oe = OrdinalEncoder()
 df_bef['Num_Ordi'] = oe.fit_transform(df_bef[['Num']])
-df_bef['Team_Ordi'] = oe.fit_transform(df_bef[['Team']])
 
 # --- Numeric DataFrame ---
 num_col = df_bef.select_dtypes(include=[np.number]).columns.tolist()
 df_num = df_bef[num_col].copy()
-for c in ['Num','Num_Ordi','Team_Ordi']:
+for c in ['Num','Num_Ordi']:
     if c in df_num.columns:
         df_num.drop(columns=c, inplace=True)
 
@@ -51,11 +53,12 @@ df_num.loc[df_num["HR_scaled"].isnull()==True, "CPBL"] = True
 
 # numeric
 numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
-exclude_cols = ['Num', 'Num_Ordi', 'Team_Ordi']
+exclude_cols = ['Num', 'Num_Ordi']
 numeric_cols = [col for col in numeric_cols if col not in exclude_cols]
 
 # --- data switch ---
 st.markdown("### Choose which dataset to visualize")
+st.write("You can select either the cleaned dataset or the raw dataset before cleaning for correlation visualization below.")
 dataset_choice = st.radio(
     "Select dataset:",
     ("Cleaned Data", "Before Cleaning"),
@@ -72,6 +75,7 @@ numeric_cols_current = current_df.select_dtypes(include=['float64', 'int64']).co
 numeric_cols_current = [col for col in numeric_cols_current if col not in exclude_cols]
 
 # --- side bar ---
+st.write("Use the sidebar to choose analysis mode: All variables or correlation with WAR/OPS+.")
 mode = st.sidebar.radio("Mode", ["All Variables", "Correlation with WAR / OPS+"], horizontal=False)
 show_values = st.sidebar.checkbox("Show correlation values", value=True)
 
@@ -107,7 +111,8 @@ st.pyplot(fig)
 
 # --- Top correlated features ---
 st.markdown("---")
-st.markdown("### 🔝 Top 5 Features Correlated with Selected Variables")
+st.subheader("Top 5 Features Correlated with Selected Variables")
+st.write("Identify the top 5 variables most correlated with the selected metrics (WAR and OPS+ by default). Use the dropdowns in the sidebar to select different variables.")
 
 var1 = st.sidebar.selectbox("Select first variable", numeric_cols_current, index=min(len(numeric_cols_current)-1, numeric_cols_current.index('WAR') if 'WAR' in numeric_cols_current else 0))
 var2 = st.sidebar.selectbox("Select second variable", numeric_cols_current, index=min(len(numeric_cols_current)-1, numeric_cols_current.index('OPS+') if 'OPS+' in numeric_cols_current else 0))

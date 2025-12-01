@@ -19,12 +19,43 @@ st.set_page_config(
     page_title="⚾ CPBL & MLB Batter Analysis Main Page",
     layout="wide"
 )
-tab1, tab2 = st.tabs(["Preview", "Variable Descriptions"])
-
+tab1, tab2, tab3 = st.tabs(["Project Introduction", "Preview", "Variable Descriptions"])
 
 with tab1:
     st.title("⚾ CPBL & MLB Batter Data Analysis Main Page")
-    st.write("Welcome to the CPBL & MLB Batter Data Analysis Dashboard! This dashboard provides an in-depth look at batter performance metrics from both the Chinese Professional Baseball League (CPBL) and Major League Baseball (MLB). Explore various statistical analyses, visualizations, and insights to better understand player performance across these two prominent baseball leagues. This page shows the overview of raw data. I used three datasets: `2025 CPBL batter data`, `2024 CPBL batter data` crawled from `Rebas野球革命`, and `2025 MLB batter data` crawled from `fangraphs` which CPBL is baseball league in Taiwan and MLB is baseball league in the United States. I choose two year of CPBL data is because CPBL play less games in a year.")
+    st.write("""
+    Welcome to the CPBL & MLB Batter Data Analysis Dashboard!  
+    This interactive dashboard provides a comprehensive exploration of batter performance metrics from both the Chinese Professional Baseball League (CPBL) and Major League Baseball (MLB). Here, you can examine statistical patterns, visualizations, and insights to better understand player performance across Taiwan’s CPBL and the United States’ MLB.
+
+    This page presents an overview of the raw datasets used in this project. The analysis combines three main sources:
+    - **2025 CPBL batter data** (crawled from *Rebas野球革命*)  
+    - **2024 CPBL batter data** (crawled from *Rebas野球革命*)  
+    - **2025 MLB batter data** (crawled from *FanGraphs*)  
+
+    Two years of CPBL data are included because the league plays fewer games per season compared to MLB, making additional data helpful for model stability.
+    """)
+
+    st.write("""
+    Throughout this project, you can follow the complete analytical workflow — including data preprocessing, exploratory data analysis (EDA), feature engineering, model construction, and model evaluation.  
+
+    Whether you're a baseball fan, a data science learner, or someone curious about sports analytics, this dashboard offers valuable insights and learning opportunities.  
+    Multiple interactive elements allow you to customize visualizations, adjust model settings, and explore data from your own perspective.
+    """)    
+
+with tab2:
+    
+    st.write("""
+    This section offers a detailed view of the datasets used for the analysis.
+
+    You can preview the first few rows of each source dataset — CPBL 2024, CPBL 2025, MLB — as well as the combined dataset after preprocessing. This allows you to quickly verify the structure and content of the raw data.
+
+    To further understand the dataset, the page includes:
+    - Dataset information such as column types and non-null counts  
+    - A missing-value heatmap that highlights where data is incomplete  
+    - A statistical summary presenting descriptive statistics (mean, standard deviation, percentiles, etc.)
+
+    These tools help establish a clear understanding of the dataset’s quality and characteristics before proceeding to cleaning, feature engineering, and modeling.
+    """)
 
     #Dataset Preview
     st.subheader("Original Dataset Preview")
@@ -60,10 +91,18 @@ with tab1:
     st.subheader("Statistical Summary")
     st.dataframe(df.describe())
 
-with tab2:
+with tab3:
     
     st.title("Variable descriptions")
-    st.write("In this page I show the description of each variable in the dataset used for analysis.")
+    st.write("""
+    This page provides detailed descriptions of all variables used in the analysis.
+
+    Each metric is listed alongside a clear explanation of its meaning and analytical purpose. 
+    These definitions help users understand how different offensive, baserunning, and advanced 
+    sabermetric statistics contribute to player evaluation. The table below summarizes all 
+    variables included in the combined CPBL–MLB dataset to ensure transparency and support 
+    interpretation before moving into modeling and deeper analysis.
+    """)
     #variable description
     variable_descriptions = {
         "BB%": "Walk rate — percentage of plate appearances ending in a walk.",

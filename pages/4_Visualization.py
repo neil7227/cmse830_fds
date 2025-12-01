@@ -8,6 +8,18 @@ plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei']
 plt.rcParams['axes.unicode_minus'] = False
 
 st.title("Visualization Dashboard")
+st.write("""
+This page allows you to **explore player performance visually** across multiple dimensions. You can interact with the data using the sidebar controls and dynamically update the charts.
+""")
+st.write("""
+## Sidebar Options
+- **Select teams**: Filter the dataset by one or more teams. Choose "All" to include every team.
+- **X/Y variables for scatter plot**: Choose which metrics to plot on the X and Y axes.
+- **Color by Team**: Toggle to color points in scatter plots according to team.
+- **Histogram variable**: Select which metric to visualize as a histogram.
+- **Violin plot variable**: Select a metric to compare distributions across teams.
+""")
+
 
 df = pd.read_csv("cleaned_data.csv")
 numeric_cols = [x for x in df.select_dtypes(include=np.number).columns if x not in ['Num_Ordi', 'Team_Ordi']]
@@ -25,7 +37,12 @@ if "All" not in selected_team:
     df_plot = df[df['Team'].isin(selected_team)]
 else:
     df_plot = df.copy()
-
+st.write("""
+## Histograms
+Displays the distribution of selected numeric variables. 
+- If "All" is selected, histograms for all numeric columns are shown in a grid.
+- Helps you quickly identify patterns, ranges, and outliers in the data.
+""")
 st.subheader("Histograms")
 if hist_var == "All":
     n_cols = 5
@@ -47,7 +64,13 @@ else:
     ax.set_title(f"Histogram of {hist_var}")
     plt.tight_layout()
     st.pyplot(fig)
-
+st.write("""
+## Scatter Plots
+Shows relationships between two variables. 
+- If Y is "All", scatter plots of X vs every other numeric variable are shown.
+- Use the "Color by Team" option to differentiate teams in the plot.
+- Useful for spotting correlations or trends between metrics.
+""")
 st.subheader("Scatter Plot")
 if var_y == "All":
     scatter_vars = [v for v in numeric_cols if v != var_x]
@@ -92,7 +115,13 @@ else:
     ax.set_title(f"{y_var} vs {var_x}")
     plt.tight_layout()
     st.pyplot(fig)
-
+st.write("""
+## Violin Plots
+Displays the distribution of a selected variable for each team. 
+- Each "violin" shows the density and variability of values.
+- Optionally, hue can be set to separate by team.
+- Helps compare performance metrics across teams visually.
+""")
 st.subheader("Violin Plot")
 plt.figure(figsize=(24,10))
 if hue_option:
