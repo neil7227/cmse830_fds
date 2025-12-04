@@ -12,4 +12,4 @@ seaborn>=0.12
 
 # Machine learning / preprocessing
 scikit-learn>=1.3
-
+statsmodels>=0.14

@@ -182,10 +182,54 @@ with tab2:
 
     # --- 顯示模型績效 ---
     st.subheader("Model Performance")
+
+    # 指標計算
     rmse = np.sqrt(mean_squared_error(y_test, y_pred))
     r2 = r2_score(y_test, y_pred)
-    st.write(f"**RMSE:** {rmse:.4f}")
-    st.write(f"**R² Score:** {r2:.4f}")
+
+    # Adjusted R²
+    n = len(y_test)
+    p = X_test.shape[1]
+    adj_r2 = 1 - (1 - r2) * (n - 1) / (n - p - 1)
+
+    # AIC
+    rss = np.sum((y_test - y_pred) ** 2)
+    k = p + 1   # 模型參數數量（含截距）
+    aic = n * np.log(rss / n) + 2 * k
+
+
+    # ---- 卡片樣式（跟 WAR 的格式一樣） ----
+    card_style = """
+        background-color: #083d63;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        color: white;
+        margin: 5px;
+    """
+
+    # ---- 四宮格排版 ----
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.markdown(f"<div style='{card_style}'>"
+                    f"<h4>RMSE</h4><h2>{rmse:.3f}</h2>"
+                    "</div>", unsafe_allow_html=True)
+
+    with col2:
+        st.markdown(f"<div style='{card_style}'>"
+                    f"<h4>R²</h4><h2>{r2:.3f}</h2>"
+                    "</div>", unsafe_allow_html=True)
+
+    with col3:
+        st.markdown(f"<div style='{card_style}'>"
+                    f"<h4>Adjusted R²</h4><h2>{adj_r2:.3f}</h2>"
+                    "</div>", unsafe_allow_html=True)
+
+    with col4:
+        st.markdown(f"<div style='{card_style}'>"
+                    f"<h4>AIC</h4><h2>{aic:.1f}</h2>"
+                    "</div>", unsafe_allow_html=True)
 
     # --- Actual vs Predicted & Residuals --- 
     st.subheader("Model Diagnostics")
